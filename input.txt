@@ -1,0 +1,4 @@
+Mary Jackson Feb-2-1990 4.0 I 60
+Jack He Feb-3-1990 2.45 D
+Mike Johnson Sep-2-1980 3.125 D
+Jane Zhang Mar-2-1970 3.8 I 120
