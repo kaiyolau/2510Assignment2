@@ -10,15 +10,21 @@
 typedef struct {
     char firstName[50];
     char lastName[50];
+    int year;
+    int month;
+    int day;
     float gpa;
-    char status;  // 'D' for domestic, 'I' for international
+    char status;  // 'D' for domestic
 } DomesticStudent;
 
 typedef struct {
     char firstName[50];
     char lastName[50];
+    int year;
+    int month;
+    int day;
     float gpa;
-    char status;
+    char status;  // 'I' for international
     int toefl;
 } InternationalStudent;
 
@@ -108,6 +114,111 @@ bool validateLineFormat(const char *line, bool *requiresTOEFL) {
     return true;
 }
 
+// Function to compare two students based on the sorting criteria
+int compareStudents(const void *a, const void *b) {
+    DomesticStudent *studentA = (DomesticStudent *)a;
+    DomesticStudent *studentB = (DomesticStudent *)b;
+
+    // Compare by year of birth
+    if (studentA->year != studentB->year) {
+        return studentA->year - studentB->year;
+    }
+
+    // Compare by month of birth
+    if (studentA->month != studentB->month) {
+        return studentA->month - studentB->month;
+    }
+
+    // Compare by day of birth
+    if (studentA->day != studentB->day) {
+        return studentA->day - studentB->day;
+    }
+
+    // Compare by last name
+    int lastNameComparison = strcmp(studentA->lastName, studentB->lastName);
+    if (lastNameComparison != 0) {
+        return lastNameComparison;
+    }
+
+    // Compare by first name
+    int firstNameComparison = strcmp(studentA->firstName, studentB->firstName);
+    if (firstNameComparison != 0) {
+        return firstNameComparison;
+    }
+
+    // Compare by GPA
+    if (studentA->gpa != studentB->gpa) {
+        return (studentA->gpa > studentB->gpa) ? -1 : 1; // Higher GPA comes first
+    }
+
+    // Compare by TOEFL if available
+    if (studentA->status == 'I' && studentB->status == 'I') {
+        InternationalStudent *intlA = (InternationalStudent *)studentA;
+        InternationalStudent *intlB = (InternationalStudent *)studentB;
+        return intlB->toefl - intlA->toefl;
+    }
+
+    // Domestic students take precedence over international
+    if (studentA->status != studentB->status) {
+        return (studentA->status == 'D') ? -1 : 1;
+    }
+
+    return 0;
+}
+
+// Merge function for MergeSort
+void merge(void *arr, int left, int mid, int right, size_t size, int (*cmp)(const void *, const void *)) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    void *L = malloc(n1 * size);
+    void *R = malloc(n2 * size);
+
+    for (int i = 0; i < n1; i++) {
+        memcpy((char *)L + i * size, (char *)arr + (left + i) * size, size);
+    }
+    for (int j = 0; j < n2; j++) {
+        memcpy((char *)R + j * size, (char *)arr + (mid + 1 + j) * size, size);
+    }
+
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        if (cmp((char *)L + i * size, (char *)R + j * size) <= 0) {
+            memcpy((char *)arr + k * size, (char *)L + i * size, size);
+            i++;
+        } else {
+            memcpy((char *)arr + k * size, (char *)R + j * size, size);
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) {
+        memcpy((char *)arr + k * size, (char *)L + i * size, size);
+        i++;
+        k++;
+    }
+
+    while (j < n2) {
+        memcpy((char *)arr + k * size, (char *)R + j * size, size);
+        j++;
+        k++;
+    }
+
+    free(L);
+    free(R);
+}
+
+// MergeSort function
+void mergeSort(void *arr, int left, int right, size_t size, int (*cmp)(const void *, const void *)) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+
+        mergeSort(arr, left, mid, size, cmp);
+        mergeSort(arr, mid + 1, right, size, cmp);
+        merge(arr, left, mid, right, size, cmp);
+    }
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 4) {
