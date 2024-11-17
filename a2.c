@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <stdbool.h>
 
 #define MAX_LINE_LENGTH 256
 #define MAX_STUDENTS 1000
@@ -59,21 +57,21 @@ void divideBirthDigits(const char *birthDigits, int *day, int *month, int *year)
 }
 
 // Helper function to check if a string is a valid float
-bool isFloat(const char *str) {
+int isFloat(const char *str) {
     char *endptr;
     strtod(str, &endptr);
     return *endptr == '\0';
 }
 
 // Helper function to check if a string is a valid integer
-bool isInteger(const char *str) {
+int isInteger(const char *str) {
     char *endptr;
     strtol(str, &endptr, 10);
     return *endptr == '\0';
 }
 
 // Function to check if the line has at least four arguments (minimum for 'D' status)
-bool isValidLine(const char *line) {
+int isValidLine(const char *line) {
     int spaceCount = 0;
     for (int i = 0; line[i] != '\0'; i++) {
         if (line[i] == ' ') {
@@ -83,8 +81,12 @@ bool isValidLine(const char *line) {
     return spaceCount >= 3;
 }
 
+int isAlphabet(char c) {
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
 // Function to validate line format with specific error reporting
-bool validateLineFormat(const char *line, bool *requiresTOEFL) {
+int validateLineFormat(const char *line, int *requiresTOEFL) {
     char birthDigits[50], firstName[50], lastName[50], gpaStr[20], statusChar, toeflStr[20];
     int fieldsRead;
 
@@ -94,20 +96,20 @@ bool validateLineFormat(const char *line, bool *requiresTOEFL) {
     // Check if we have at least 4 fields
     if (fieldsRead < 5) {
         fprintf(stderr, "Error: Line must contain at least 5 fields (FirstName LastName BirthDate GPA Status)\n");
-        return false;
+        return 0;
     }
 
     // Check if the name fields are alphabetic
     for (int i = 0; i < strlen(firstName); i++) {
-        if (!isalpha(firstName[i])) {
+        if (!isAlphabet(firstName[i])) {
             fprintf(stderr, "Error: Invalid first name - Contains non-alphabetical characters: %s\n", firstName);
-            return false;
+            return 0;
         }
     }
     for (int i = 0; i < strlen(lastName); i++) {
-        if (!isalpha(lastName[i])) {
+        if (!isAlphabet(lastName[i])) {
             fprintf(stderr, "Error: Invalid last name - Contains non-alphabetical characters: %s\n", lastName);
-            return false;
+            return 0;
         }
     }
 
@@ -115,31 +117,31 @@ bool validateLineFormat(const char *line, bool *requiresTOEFL) {
     float gpa = atof(gpaStr);
     if (!isFloat(gpaStr) || gpa < 0.0 || gpa > 4.3) {
         fprintf(stderr, "Error: Invalid GPA - Not in range 0.0 to 4.3: %s\n", gpaStr);
-        return false;
+        return 0;
     }
 
     // Check if status is either 'I' or 'D'
     if (statusChar != 'I' && statusChar != 'D') {
         fprintf(stderr, "Error: Invalid status - Expected 'I' or 'D', found: %c\n", statusChar);
-        return false;
+        return 0;
     }
 
     // If status is 'I', ensure TOEFL score is provided and valid
     if (statusChar == 'I') {
-        *requiresTOEFL = true;
+        *requiresTOEFL = 1;
         if (fieldsRead != 6 || !isInteger(toeflStr)) {
             fprintf(stderr, "Error: Invalid TOEFL score - Expected an integer: %s\n", toeflStr);
-            return false;
+            return 0;
         }
     } else {
-        *requiresTOEFL = false;
+        *requiresTOEFL = 0;
         if (fieldsRead > 5) {
             fprintf(stderr, "Error: Extra arguments found for 'D' status\n");
-            return false;
+            return 0;
         }
     }
 
-    return true;
+    return 1;
 }
 
 // Function to compare two students based on the sorting criteria
@@ -260,7 +262,7 @@ void processFile(FILE *input, FILE *output, int option) {
         float gpa = 0.0;
         char status;
         int toefl = -1;
-        bool requiresTOEFL = false;
+        int requiresTOEFL = 0;
 
         //Validate the format of the line
         if (!validateLineFormat(line, &requiresTOEFL)) {
